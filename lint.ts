@@ -42,13 +42,18 @@ function lintScript(text: string) {
 
             // browser globals
             CSSStyleValue: true,
+            CSSStyleDeclaration: true,
             Element: true,
             Map: true,
             Node: true,
             window: true,
+            URL: true,
+            Set: true,
+            location: true,
 
             // CDP
             InspectorUtils: true
+
         }
     });
 
