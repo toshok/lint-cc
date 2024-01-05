@@ -1,5 +1,6 @@
-import * as fs from 'fs';
-import * as eslint from 'eslint';
+#!/bin/env node
+const fs = require('fs'),
+      eslint = require('eslint');
 
 
 let replayText = fs.readFileSync(process.argv[2], 'utf8');
@@ -8,9 +9,9 @@ let regex = new RegExp('//js', 'g');
 let endRegex = new RegExp('\\)""""', 'g');
 const linter = new eslint.Linter();
 
-function findMatches(text: string, regex: RegExp) {
+function findMatches(text/*: string*/, regex/*: RegExp*/) {
     let match;
-    const matches: number[] = [];
+    const matches/*: number[] */ = [];
     while ((match = regex.exec(text)) != null) {
         const res = text.substr(0, match.index).split('\n').length - 1;
         matches.push(res);
@@ -19,14 +20,14 @@ function findMatches(text: string, regex: RegExp) {
     return matches
 }
 
-function getNamedTextBlock(text: string, start: number, end: number) {
+function getNamedTextBlock(text/*: string*/, start/*: number*/, end/*: number*/) {
     const lines = text.split('\n');
     const name = lines[start-1].split(' ')[2];
     const block_lines = lines.slice(start, end);
     return { name, text: "\n".repeat(start) + block_lines.join('\n') };
 }
 
-function lintScript({ name, text }: { name: string, text: string }) {
+function lintScript({ name, text }/*: { name: string, text: string }*/) {
     const messages = linter.verify(text, {
         parserOptions: {
             ecmaVersion: 2023,

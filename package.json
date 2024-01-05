@@ -1,9 +1,10 @@
 {
+  "name": "lint-cc",
+  "bin": "./lint.js",
   "scripts": {
-    "test": "npx ts-node ./lint.ts ./replay.cc"
+    "test": "node ./lint.js ./replay.cc"
   },
   "dependencies": {
-    "@types/eslint": "^8.56.1",
     "eslint": "^8.56.0"
   }
 }
