@@ -1,5 +1,9 @@
 {
+  "scripts": {
+    "test": "npx ts-node ./lint.ts ./replay.cc"
+  },
   "dependencies": {
+    "@types/eslint": "^8.56.1",
     "eslint": "^8.56.0"
   }
 }

@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as eslint from 'eslint';
 
 
-let replayText = fs.readFileSync('replay.cc', 'utf8');
+let replayText = fs.readFileSync(process.argv[2], 'utf8');
 
 let regex = new RegExp('//js', 'g');
 let endRegex = new RegExp('\\)""""', 'g');
@@ -12,29 +12,37 @@ function findMatches(text: string, regex: RegExp) {
     let match;
     const matches: number[] = [];
     while ((match = regex.exec(text)) != null) {
-        const res = text.substr(0, match.index).split('\n').length;
+        const res = text.substr(0, match.index).split('\n').length - 1;
         matches.push(res);
     }
 
     return matches
 }
 
-function getTextBlock(text: string, start: number, end: number) {
-    return "//js\n" + text.split('\n').slice(start, end - 1).join('\n');
+function getNamedTextBlock(text: string, start: number, end: number) {
+    const lines = text.split('\n');
+    const name = lines[start-1].split(' ')[2];
+    const block_lines = lines.slice(start, end);
+    return { name, text: "\n".repeat(start) + block_lines.join('\n') };
 }
 
-function lintScript(text: string) {
+function lintScript({ name, text }: { name: string, text: string }) {
     const messages = linter.verify(text, {
         parserOptions: {
             ecmaVersion: 2023,
             sourceType: "module",
         },
         rules: {
-            "no-undef": ["error"]
+            "no-undef": ["error"],
+            "no-unused-vars": ["warn", {
+              "argsIgnorePattern": "^_",
+              "varsIgnorePattern": "^_",
+              "caughtErrorsIgnorePattern": "^_",
+            }],
         },
-        // env: {
-        //     "browser": true
-        // },
+        env: {
+            "browser": true
+        },
         globals: {
             __RECORD_REPLAY_ARGUMENTS__: true,
             __RECORD_REPLAY__: true,
@@ -58,10 +66,13 @@ function lintScript(text: string) {
     });
 
     if (messages.length > 0) {
-        console.log(messages)
+        console.log(`Script ${name}:\n`, messages)
     }
 
-    return messages.length > 0
+    return {
+        errors: messages.filter(m => m.severity === 2).length,
+        warnings: messages.filter(m => m.severity === 1).length,
+    }
 }
 
 const lineNumbers = findMatches(replayText, regex)
@@ -69,12 +80,18 @@ const endLineNumbers = findMatches(replayText, endRegex)
 // console.log('Lines with "//js":', lineNumbers);
 // console.log('Lines with ")"""":', endLineNumbers);
 
-const textBlocks = lineNumbers.map((lineNumber, index) => getTextBlock(replayText, lineNumber, endLineNumbers[index]))
+const textBlocks = lineNumbers.map((lineNumber, index) => getNamedTextBlock(replayText, lineNumber, endLineNumbers[index]))
 
-const hasErrors = textBlocks.some(block => lintScript(block))
+let errorCount = 0;
+let warningCount = 0;
+for (const block of textBlocks) {
+  const { errors, warnings } = lintScript(block);
+  errorCount += errors;
+  warningCount += warnings;
+}
 
-if (hasErrors) {
-    console.log('ESLint issue')
+console.log(`ESLint: ${errorCount} errors, ${warningCount} warnings`)
+if (errorCount > 0) {
     process.exit(1)
 }
 
