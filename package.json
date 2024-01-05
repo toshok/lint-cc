@@ -1,4 +1,7 @@
 {
+  "bin": {
+    "lint-cc": "npx ts-node ./lint.ts"
+  },
   "scripts": {
     "test": "npx ts-node ./lint.ts ./replay.cc"
   },
